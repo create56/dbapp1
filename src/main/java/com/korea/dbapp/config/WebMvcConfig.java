@@ -12,8 +12,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     // 특정 주소일떄 동작
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new SessionInterceptor());
-
+        registry.addInterceptor(new SessionInterceptor()).addPathPatterns("/post/**").addPathPatterns("/user/**");
         // 메모리에 뜰떄 자동 실행
         // 프로그래머가 실행하는거 아님
 
