@@ -6,6 +6,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,84 +34,92 @@ public class PostController {
 	private final HttpSession session;
 	private final HttpServletRequest request;
 	private final CommentRepository commentRepository;
-	
-	@GetMapping({"/", "/post"})
-	public String list(Model model) { // model = request
-		model.addAttribute("postsEntity", postRepository.findAll());
+
+	// http://localhost:8000/test/page?page=0
+	@GetMapping("/test/page")
+	public @ResponseBody Page<Post> testPage(int page) {
+		return postRepository.findAll(PageRequest.of(page, 4));
+	}
+
+	@GetMapping({ "/", "/post" })
+	public String list(Model model, Integer page) { // model = request
+		if (page == null) {
+			page = 0;
+		}
+		model.addAttribute("postsEntity", postRepository.findAll(PageRequest.of(page, 4)));
 		return "post/list"; // ViewResolver 도움!! + RequestDispatcher (request유지 기법)
 	}
-	
+
 	@GetMapping("/post/{id}")
 	public String detail(@PathVariable int id, Model model) {
-		
+
 		Post postEntity = postRepository.findById(id).get();
 		model.addAttribute("postEntity", postEntity);
-		
+
 		List<Comment> commentsEntity = commentRepository.mFindAllByPostId(id);
 		model.addAttribute("commentsEntity", commentsEntity);
-		
+
 		return "post/detail";
 	}
-	
+
 	@DeleteMapping("/post/{id}")
 	public @ResponseBody String deleteById(@PathVariable int id) {
-		// 1. 권한체크 ( post id를 통해 user id 를 찾아서 session의 user id를 비교) - 생략    
-		
+		// 1. 권한체크 ( post id를 통해 user id 를 찾아서 session의 user id를 비교) - 생략
+
 		// 세션의 user id 찾기 (session)
 		User principal = (User) session.getAttribute("principal");
 		int userId = principal.getId();
-				
+
 		// post의 user id 찾기 ({id})
 		Post postEntity = postRepository.findById(id).get(); // 이런건 어떻게 처리하지?
 		int postUserId = postEntity.getUser().getId();
-		
+
 		// 2. {id} 값으로 삭제!!
-		if(userId == postUserId) {
+		if (userId == postUserId) {
 			postRepository.deleteById(id);
 			return "ok";
-		}else {
+		} else {
 			return "fail";
 		}
-		
+
 	} // end of deleteById
-	
-	
+
 	@GetMapping("/post/saveForm")
 	public String saveForm() {
 		// 1. 인증 체크 - 숙제
-		
+
 		return "post/saveForm"; // 파일을 호출
 	}
-	
+
 	@PostMapping("/post")
 	public String save(Post post) {
 		User principal = (User) session.getAttribute("principal");
-		if(principal == null) {
+		if (principal == null) {
 			return "redirect:/auth/loginForm"; // 주소를 호출
 		}
-		
+
 		post.setUser(principal);
 		postRepository.save(post);
 		return "redirect:/";
 	}
-	
+
 	@GetMapping("/post/{id}/updateForm")
 	public String updateForm(@PathVariable int id, Model model) {
-		
+
 		User principal = (User) session.getAttribute("principal");
 		int loginId = principal.getId();
-		
+
 		Post postEntity = postRepository.findById(id).get();
 		int postOwnerId = postEntity.getUser().getId();
-		
-		if(loginId == postOwnerId) {
+
+		if (loginId == postOwnerId) {
 			model.addAttribute("postEntity", postEntity);
 			return "post/updateForm";
-		}else {
+		} else {
 			return "redirect:/auth/loginForm";
 		}
 	}
-	
+
 	@PutMapping("/post/{id}")
 	public @ResponseBody String update(@PathVariable int id, @RequestBody Post post) {
 		Post postEntity = postRepository.findById(id).get();
@@ -119,10 +129,3 @@ public class PostController {
 		return "ok";
 	}
 }
-
-
-
-
-
-
-

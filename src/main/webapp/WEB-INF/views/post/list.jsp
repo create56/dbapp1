@@ -6,7 +6,7 @@
 
 <div class="container">
 
-	<c:forEach var="post" items="${postsEntity}">
+	<c:forEach var="post" items="${postsEntity.content}">
 		<div class="card">
 			<div class="card-body">
 				<h4 class="card-title">${post.title}</h4>
@@ -16,6 +16,11 @@
 		<br/>
 		<!-- End of Card -->
 	</c:forEach>
+	<!-- disabled -->
+	<ul class="pagination"> 
+ 		 <li class="page-item disabled"><a class="page-link" href="?page=${postsEntity.number-1}">Previous</a></li>
+  		<li class="page-item"><a class="page-link" href="?page=${postsEntity.number+1}">Next</a></li>
+</ul>
 
 </div>
 <!-- End Of Container -->
